@@ -1,291 +1,385 @@
-package com.programmerworld.getlatitudelongitudecoordinatesfromaddress;
+package project.bluetoothterminal;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.location.Address;
-import android.location.Geocoder;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.EditText;
-import android.widget.TextView;
-
-import java.io.IOException;
-import java.util.List;
-import android.widget.Button;
-import android.widget.ListView;
-//widgets variables to “call” the widgets used to create the layout
-Button btnPaired;
-ListView devicelist;
-btnPaired = (Button)findViewById(R.id.button);
-devicelist = (ListView)findViewById(R.id.listView);
-import java.util.Set;
-import java.util.ArrayList;
-import android.widget.Toast;
-import android.widget.ArrayAdapter;
-import android.widget.AdapterView
-import android.widget.AdapterView.OnClickListener
-import android.widget.TextView;
-import android.content.Intent;
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-//Creating variables to control bluetooth
-private BluetoothAdapter myBluetooth = null;
-private Set pairedDevices;
-//checking bluetooth adapter
-        myBluetooth = BluetoothAdapter.getDefaultAdapter();
-        if(myBluetooth == null)
-        {
-        //Show a mensag. that thedevice has no bluetooth adapter
-        Toast.makeText(getApplicationContext(), "Bluetooth Device Not Available", Toast.LENGTH_LONG).show();
-        //finish apk
-        finish();
-        }
-        else
-        {
-        if (myBluetooth.isEnabled())
-        { }
-        else
-        {
-        //Ask to the user turn the bluetooth on
-        Intent turnBTon = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        startActivityForResult(turnBTon,1);
-        }
-        }
-        // Listen -->OnClickListener Api
-        btnPaired.setOnClickListener(new View.OnClickListener() {
-//Override
-public void onClick(View v)
-        {
-        pairedDevicesList(); //method that will be called
-        }
-        });
-private void pairedDevicesList()
-        {
-        pairedDevices = myBluetooth.getBondedDevices();
-        ArrayList list = new ArrayList();
-
-        if (pairedDevices.size()>0)
-        {
-        for(BluetoothDevice bt : pairedDevices)
-        {
-        list.add(bt.getName() + "\n" + bt.getAddress()); //Get the device's name and the address
-        }
-        }
-        else
-        {
-        Toast.makeText(getApplicationContext(), "No Paired Bluetooth Devices Found.", Toast.LENGTH_LONG).show();
-        }
-
-final ArrayAdapter adapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1, list);
-        devicelist.setAdapter(adapter);
-        devicelist.setOnItemClickListener(myListClickListener); //Method called when the device from the list is clicked
-
-        }
-        import android.bluetooth.BluetoothSocket;
-        import android.content.Intent;
-        import android.view.View;
-        import android.widget.Button;
-        import android.widget.SeekBar;
-        import android.widget.TextView;
-        import android.widget.Toast;
-        import android.app.ProgressDialog;
-        import android.bluetooth.BluetoothAdapter;
-        import android.bluetooth.BluetoothDevice;
-        import android.os.AsyncTask;
-        import java.io.IOException;
-        import java.util.UUID;
-        Button btnOn, btnOff, btnDis;
-        SeekBar brightness;
-        String address = null;
-private ProgressDialog progress;
-        BluetoothAdapter myBluetooth = null;
-        BluetoothSocket btSocket = null;
-private boolean isBtConnected = false;
-static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-// Class for starting the connection
-private class ConnectBT extends AsyncTask<Void, Void, Void>  // UI thread
-{
-    private boolean ConnectSuccess = true; //if it's here, it's almost connected
-
-    //Override
-    protected void onPreExecute()
-    {
-        progress = ProgressDialog.show(ledControl.this, "Connecting...", "Please wait!!!");  //show a progress dialog
-    }
-
-    //Override
-    protected Void doInBackground(Void... devices) //while the progress dialog is shown, the connection is done in background
-    {
-        try
-        {
-            if (btSocket == null || !isBtConnected)
-            {
-                myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
-                BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
-                btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
-                BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
-                btSocket.connect();//start connection
-            }
-        }
-        catch (IOException e)
-        {
-            ConnectSuccess = false;//if the try failed, you can check the exception here
-        }
-        return null;
-    }
-    //Override
-    protected void onPostExecute(Void result) //after the doInBackground, it checks if everything went fine
-    {
-        super.onPostExecute(result);
-
-        if (!ConnectSuccess)
-        {
-            msg("Connection Failed. Is it a SPP Bluetooth? Try again.");
-            finish();
-        }
-        else
-        {
-            msg("Connected.");
-            isBtConnected = true;
-        }
-        progress.dismiss();
-    }
-}
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Color;
+import android.net.Uri;
+import android.os.Bundle;
+import android.support.p000v4.app.ActivityCompat;
+import android.support.p000v4.view.PointerIconCompat;
+import android.support.p000v4.view.ViewCompat;
+import android.support.p003v7.app.AlertDialog;
+import android.support.p003v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import project.bluetoothterminal.util.IabHelper;
+import project.bluetoothterminal.util.IabResult;
+import project.bluetoothterminal.util.Inventory;
 
 public class MainActivity extends AppCompatActivity {
+    static final String ITEM_SKU = "bluetooth_terminal_hc05";
+    static ListView lstPair;
+    public static BluetoothAdapter mBluetoothAdapter = null;
+    static Boolean mIsPremium;
+    public static Set<String> mPairedDevicesSet = new HashSet();
+    private final int Ads_Counter_Limit = 15;
+    String Message = "This app does not use location information, but scanning for Bluetooth devices requires this permission.\n\nThe scan result can contain location information, so Google decided that starting with Android 6.0 apps have to request permission.";
+    String Title = "Location permission required";
+    public Activity activity;
+    AdRequest adRequest;
+    AdView mAdView;
+    IabHelper mHelper;
+    /* access modifiers changed from: private */
+    public InterstitialAd mInterstitialAd;
+    private final ArrayList<String> mPairedDevicesList = new ArrayList<>();
+    IabHelper.QueryInventoryFinishedListener mReceivedInventoryListener = new IabHelper.QueryInventoryFinishedListener() {
+        public void onQueryInventoryFinished(IabResult iabResult, Inventory inventory) {
+            if (iabResult.isFailure()) {
+                Toast.makeText(MainActivity.this.getApplicationContext(), "Failed", 0).show();
+                return;
+            }
+            MainActivity.mIsPremium = Boolean.valueOf(inventory.hasPurchase(MainActivity.ITEM_SKU));
+            if (!MainActivity.mIsPremium.booleanValue()) {
+                Log.d("HC-05 Terminal", "is not Premium");
+                MainActivity.this.mAdView.loadAd(MainActivity.this.adRequest);
+                return;
+            }
+            Log.d("HC-05 Terminal", "is Premium");
+        }
+    };
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            if ("android.bluetooth.device.action.BOND_STATE_CHANGED".equals(intent.getAction())) {
+                int intExtra = intent.getIntExtra("android.bluetooth.device.extra.BOND_STATE", Integer.MIN_VALUE);
+                int intExtra2 = intent.getIntExtra("android.bluetooth.device.extra.PREVIOUS_BOND_STATE", Integer.MIN_VALUE);
+                if (intExtra == 12 && intExtra2 == 11) {
+                    MainActivity.this.paired();
+                } else if (intExtra == 10 && intExtra2 == 12) {
+                    MainActivity.this.paired();
+                }
+            }
+        }
+    };
+    private CustomArrayAdapter_Paired pairedDevicesArrayAdapter;
+    PrefManager prefManager;
+    /* access modifiers changed from: private */
+    public boolean sentToSettings = false;
 
-    private EditText editText;
-    private TextView textView;
+    /* access modifiers changed from: protected */
+    public void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
+        setContentView((int) C0605R.layout.activity_main);
+        In_App_setup();
+        this.prefManager = new PrefManager(this);
+        this.activity = this;
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        MobileAds.initialize(this, getResources().getString(C0605R.string.Admob_app_id));
+        this.mAdView = (AdView) findViewById(C0605R.C0607id.adView);
+        this.adRequest = new AdRequest.Builder().addTestDevice(getResources().getString(C0605R.string.Test_adUnit_Id)).build();
+        this.mAdView.setAdListener(new AdListener() {
+            public void onAdLoaded() {
+                MainActivity.this.mAdView.setVisibility(0);
+            }
+        });
+        this.mInterstitialAd = new InterstitialAd(this);
+        this.mInterstitialAd.setAdUnitId(getResources().getString(C0605R.string.fullpage_ad_unit_id));
+        this.mInterstitialAd.setAdListener(new AdListener() {
+            public void onAdClosed() {
+            }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+            public void onAdFailedToLoad(int i) {
+            }
 
-        editText = findViewById(R.id.editTextTextPersonName);
-        textView = findViewById(R.id.textView);
+            public void onAdLeftApplication() {
+            }
+
+            public void onAdLoaded() {
+                MainActivity.this.mInterstitialAd.show();
+            }
+
+            public void onAdOpened() {
+                MainActivity.this.prefManager.setAd_mainlaunch_page_Counter(-1);
+            }
+        });
+        lstPair = (ListView) findViewById(C0605R.C0607id.lstPair);
+        this.pairedDevicesArrayAdapter = new CustomArrayAdapter_Paired(this.mPairedDevicesList, this);
+        lstPair = (ListView) findViewById(C0605R.C0607id.lstPair);
+        lstPair.setAdapter(this.pairedDevicesArrayAdapter);
+        lstPair.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long j) {
+                if (MainActivity.mBluetoothAdapter.isEnabled()) {
+                    MainActivity.mBluetoothAdapter.cancelDiscovery();
+                    String obj = MainActivity.lstPair.getItemAtPosition(i).toString();
+                    if (obj != null) {
+                        String substring = obj.substring(obj.length() - 17);
+                        Intent intent = new Intent(MainActivity.this, ChatRoom.class);
+                        intent.putExtra("MAC_Add", substring.toUpperCase());
+                        MainActivity.this.startActivityForResult(intent, 1);
+                        return;
+                    }
+                    return;
+                }
+                MainActivity.this.startActivityForResult(new Intent("android.bluetooth.adapter.action.REQUEST_ENABLE"), 3);
+            }
+        });
+        registerReceiver(this.mReceiver, new IntentFilter("android.bluetooth.device.action.BOND_STATE_CHANGED"));
+        if (mBluetoothAdapter == null) {
+            Toast.makeText(this.activity, "Bluetooth is not available", 1).show();
+            this.activity.finish();
+        }
     }
 
-    public void buttonGetCoordinates(View view){
-        Geocoder geocoder = new Geocoder(this);
-        List<Address> addressList;
-
-        try {
-            addressList = geocoder.getFromLocationName(editText.getText().toString(), 1);
-
-            if (addressList != null){
-                double doubleLat = addressList.get(0).getLatitude();
-                double doubleLong = addressList.get(0).getLongitude();
-                textView.setText("Latitude: " + String.valueOf(doubleLat)
-                        + " | " + "Longitude: " + String.valueOf(doubleLong));
-
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    /* access modifiers changed from: protected */
+    public void onDestroy() {
+        super.onDestroy();
+        BluetoothAdapter bluetoothAdapter = mBluetoothAdapter;
+        if (bluetoothAdapter != null) {
+            bluetoothAdapter.cancelDiscovery();
         }
+        unregisterReceiver(this.mReceiver);
+    }
+
+    public static void doDiscovery() {
+        BluetoothAdapter bluetoothAdapter = mBluetoothAdapter;
+        if (bluetoothAdapter == null) {
+            return;
+        }
+        if (bluetoothAdapter.isDiscovering()) {
+            Log.d("TAG", "Cancel Discovery()");
+            mBluetoothAdapter.cancelDiscovery();
+            mBluetoothAdapter.startDiscovery();
+            return;
+        }
+        mBluetoothAdapter.startDiscovery();
+    }
+
+    /* access modifiers changed from: protected */
+    public void onResume() {
+        super.onResume();
+        getWindow().clearFlags(128);
+        if (this.prefManager.getKeepscreen()) {
+            Log.d("Keep", "true");
+            getWindow().addFlags(128);
+        } else {
+            Log.d("Keep", "false");
+        }
+        Boolean bool = mIsPremium;
+        if (bool == null || bool.booleanValue()) {
+            this.mAdView.setVisibility(8);
+        } else {
+            this.mAdView.loadAd(this.adRequest);
+            if (this.prefManager.getAd_mainlaunch_page_Counter() >= 15) {
+                this.mInterstitialAd.loadAd(this.adRequest);
+            }
+        }
+        PrefManager prefManager2 = this.prefManager;
+        prefManager2.setAd_mainlaunch_page_Counter(prefManager2.getAd_mainlaunch_page_Counter());
+        Log.d("Ads_Counter_MainLaunch", "" + this.prefManager.getAd_mainlaunch_page_Counter());
+    }
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(C0605R.C0609menu.menu_main, menu);
+        return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem menuItem) {
+        int itemId = menuItem.getItemId();
+        if (itemId != C0605R.C0607id.action_View_More) {
+            switch (itemId) {
+                case C0605R.C0607id.action_scan /*2131296288*/:
+                    checkForLocationPermission();
+                    return true;
+                case C0605R.C0607id.action_setting /*2131296289*/:
+                    startActivity(new Intent(this, setting_prefs.class));
+                    return true;
+                default:
+                    return super.onOptionsItemSelected(menuItem);
+            }
+        } else {
+            startActivity(new Intent(this, View_More.class));
+            return true;
+        }
+    }
+
+    public void onStart() {
+        super.onStart();
+        if (!mBluetoothAdapter.isEnabled()) {
+            startActivityForResult(new Intent("android.bluetooth.adapter.action.REQUEST_ENABLE"), 3);
+            return;
+        }
+        paired();
+        check_firstTime();
+    }
+
+    public void check_firstTime() {
+        if (this.prefManager.isFirstTimeLaunch()) {
+            alert_Dialog();
+            Log.d("firsttime", "OK");
+            this.prefManager.setFirstTimeLaunch(false);
+        }
+    }
+
+    public void paired() {
+        Log.d("Paired", "Call");
+        mPairedDevicesSet.clear();
+        this.mPairedDevicesList.clear();
+        this.pairedDevicesArrayAdapter.notifyDataSetChanged();
+        Set<BluetoothDevice> bondedDevices = mBluetoothAdapter.getBondedDevices();
+        if (bondedDevices.size() > 0) {
+            lstPair.setEnabled(true);
+            for (BluetoothDevice next : bondedDevices) {
+                mPairedDevicesSet.add(next.getAddress());
+                ArrayList<String> arrayList = this.mPairedDevicesList;
+                arrayList.add(next.getName() + Constants.f59LF + next.getAddress());
+                this.pairedDevicesArrayAdapter.notifyDataSetChanged();
+            }
+            return;
+        }
+        lstPair.setEnabled(false);
+        this.mPairedDevicesList.add(getResources().getText(C0605R.string.none_paired).toString());
+    }
+
+    /* access modifiers changed from: protected */
+    public void onActivityResult(int i, int i2, Intent intent) {
+        super.onActivityResult(i, i2, intent);
+        if (i == 3) {
+            if (i2 == -1) {
+                paired();
+                check_firstTime();
+                return;
+            }
+            Log.d(Constants.TAG, "BT not enabled");
+            Toast.makeText(this.activity, C0605R.string.bt_not_enabled_leaving, 0).show();
+            this.activity.finish();
+        }
+    }
+
+    public static void unpairDevice(String str) {
+        Set<BluetoothDevice> bondedDevices = mBluetoothAdapter.getBondedDevices();
+        if (bondedDevices.size() > 0) {
+            lstPair.setEnabled(true);
+            for (BluetoothDevice next : bondedDevices) {
+                if ((next.getName() + Constants.f59LF + next.getAddress()).equals(str)) {
+                    try {
+                        next.getClass().getMethod("removeBond", (Class[]) null).invoke(next, (Object[]) null);
+                        return;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    public void alert_Dialog() {
+        LinearLayout linearLayout = new LinearLayout(this);
+        linearLayout.setOrientation(1);
+        linearLayout.setPadding(50, 50, 50, 50);
+        TextView textView = new TextView(this);
+        TextView textView2 = new TextView(this);
+        textView.setText(C0605R.string.app_name_pro);
+        textView.setTextSize(16.0f);
+        textView.setTypeface(textView.getTypeface(), 1);
+        textView.setTextColor(Color.parseColor("#0183FF"));
+        textView2.setText(C0605R.string.pro_alert_message);
+        textView2.setTextSize(16.0f);
+        textView2.setPadding(0, 16, 0, 0);
+        textView2.setTextColor(ViewCompat.MEASURED_STATE_MASK);
+        linearLayout.addView(textView);
+        linearLayout.addView(textView2);
+        new AlertDialog.Builder(this).setIcon(C0605R.C0606drawable.new_app).setTitle("Buy our New App!").setView(linearLayout).setCancelable(false).setPositiveButton("Buy", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialogInterface, int i) {
+                MainActivity.this.startActivity(new Intent("android.intent.action.VIEW", Uri.parse("market://details?id=" + MainActivity.this.getPackageName() + "pro")));
+                dialogInterface.dismiss();
+            }
+        }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        }).create().show();
+    }
+
+    private void checkForLocationPermission() {
+        if (ActivityCompat.checkSelfPermission(this, "android.permission.ACCESS_COARSE_LOCATION") != 0) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, "android.permission.ACCESS_COARSE_LOCATION")) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle((CharSequence) this.Title);
+                builder.setMessage((CharSequence) this.Message);
+                builder.setPositiveButton((CharSequence) "Grant", (DialogInterface.OnClickListener) new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{"android.permission.ACCESS_COARSE_LOCATION"}, PointerIconCompat.TYPE_CONTEXT_MENU);
+                    }
+                });
+                builder.setNegativeButton((CharSequence) "Cancel", (DialogInterface.OnClickListener) new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                });
+                builder.show();
+            } else if (this.prefManager.getPermission().booleanValue()) {
+                AlertDialog.Builder builder2 = new AlertDialog.Builder(this);
+                builder2.setTitle((CharSequence) this.Title);
+                builder2.setMessage((CharSequence) this.Message);
+                builder2.setPositiveButton((CharSequence) "Grant", (DialogInterface.OnClickListener) new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                        boolean unused = MainActivity.this.sentToSettings = true;
+                        Intent intent = new Intent("android.settings.APPLICATION_DETAILS_SETTINGS");
+                        intent.setData(Uri.fromParts("package", MainActivity.this.getPackageName(), (String) null));
+                        MainActivity.this.startActivityForResult(intent, 0);
+                        Toast.makeText(MainActivity.this.getBaseContext(), "Go to Permissions to Grant Location", 1).show();
+                    }
+                });
+                builder2.setNegativeButton((CharSequence) "Cancel", (DialogInterface.OnClickListener) new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                });
+                builder2.show();
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{"android.permission.ACCESS_COARSE_LOCATION"}, PointerIconCompat.TYPE_CONTEXT_MENU);
+            }
+            this.prefManager.setPermission();
+            return;
+        }
+        startActivity(new Intent(getApplicationContext(), Scan_Device_Dialog.class));
+    }
+
+    public void In_App_setup() {
+        this.mHelper = new IabHelper(this, "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiQ9SZjuzZKUtwBnHeQXbCfSwq/P2HQYdAFKgzyLAWfPSQP7zsGz3uObNfC212CcFeodOYP67/5gHdaEFCxcWpqrsoXAv+vl/aOJ14AsmO1T4+v6XvV2D+DkaAEWFbZJIljygLhlXHrOTwE4CPegWhQkwXzus4BQI4IKGLltSqrD0DNO/YPgaWQm3ENWbNolfZR+Itbo52L4yXjZH/uMsu08++MPZcDMT2hnaVlaFbpYoPUtuimyLaZRk7FnubiOzzBF+btDNP8bkKJ9IKYiC4JIwxkPO6/CiCmkjB7Zb33s2d4vwwTufSM9rSQtinE6x+LzG0ila030z1NdkY3sP7QIDAQAB");
+        this.mHelper.startSetup(new IabHelper.OnIabSetupFinishedListener() {
+            public void onIabSetupFinished(IabResult iabResult) {
+                if (!iabResult.isSuccess()) {
+                    Log.d("TAG", "In-app Billing setup failed: " + iabResult);
+                    return;
+                }
+                Log.d("TAG", "In-app Billing is set up OK");
+                MainActivity.this.mHelper.queryInventoryAsync(MainActivity.this.mReceivedInventoryListener);
+            }
+        });
     }
 }
-    <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:context=".MainActivity">
-
-<TextView
-        android:id="@+id/textView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Hello World!"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-<Button
-        android:id="@+id/button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="116dp"
-                android:layout_marginTop="188dp"
-                android:onClick="buttonGetCoordinates"
-                android:text="Get Coordinates"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-<EditText
-        android:id="@+id/editTextTextPersonName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="94dp"
-                android:layout_marginTop="61dp"
-                android:ems="10"
-                android:hint="Address"
-                android:inputType="textPersonName"
-                android:minHeight="48dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.programmerworld.getlatitudelongitudecoordinatesfromaddress">
-
-<application
-        android:allowBackup="true"
-                android:icon="@mipmap/ic_launcher"
-                android:label="@string/app_name"
-                android:roundIcon="@mipmap/ic_launcher_round"
-                android:supportsRtl="true"
-                android:theme="@style/Theme.GetLatitudeLongitudeCoordinatesFromAddress">
-<activity
-            android:name=".MainActivity"
-                    android:exported="true">
-<intent-filter>
-<action android:name="android.intent.action.MAIN" />
-
-<category android:name="android.intent.category.LAUNCHER" />
-</intent-filter>
-</activity>
-</application>
-
-</manifest>
-        plugins {
-        id 'com.android.application'
-        }
-
-        android {
-        compileSdk 31
-
-        defaultConfig {
-        applicationId "com.programmerworld.getlatitudelongitudecoordinatesfromaddress"
-        minSdk 31
-        targetSdk 31
-        versionCode 1
-        versionName "1.0"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        }
-
-        buildTypes {
-        release {
-        minifyEnabled false
-        proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-        }
-        compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-        }
-        }
-
-        dependencies {
-
-        implementation 'androidx.appcompat:appcompat:1.4.1'
-        implementation 'com.google.android.material:material:1.5.0'
-        implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
-        testImplementation 'junit:junit:4.+'
-        androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-        androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-        }
